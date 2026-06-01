@@ -1,9 +1,12 @@
 package com.rentify.repositories;
 
-import com.rentify.models.InventoryItem;
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.rentify.models.InventoryItem;
+
 public interface InventoryRepository extends JpaRepository<InventoryItem, Long> {
+    // Пошук майна за його статусом
     List<InventoryItem> findByStatus(String status);
 }

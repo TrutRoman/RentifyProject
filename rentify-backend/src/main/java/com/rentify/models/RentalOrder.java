@@ -1,9 +1,16 @@
 package com.rentify.models;
 
-import jakarta.persistence.*;
-import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Data
 @Entity
@@ -15,7 +22,9 @@ public class RentalOrder {
 
     private Long clientId;
     private Long managerId;
-    private Long inventoryItemId;
+    @ManyToOne
+    @JoinColumn(name = "inventory_item_id")
+    private InventoryItem inventoryItem;
 
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime;

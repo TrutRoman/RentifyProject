@@ -1,10 +1,17 @@
 package com.rentify.controllers;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.rentify.models.User;
 import com.rentify.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -17,6 +24,12 @@ public class UserController {
     @PostMapping("/register")
     public User registerClient(@RequestBody User user) {
         user.setRole("CLIENT");
+        
+        // ДОДАЄМО ЦЕ: Якщо менеджер не ввів пароль, ставимо тимчасовий
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            user.setPassword("1234"); 
+        }
+        
         return userRepository.save(user);
     }
 

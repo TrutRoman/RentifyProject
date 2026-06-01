@@ -1,8 +1,12 @@
 package com.rentify.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
-import java.math.BigDecimal;
 
 @Data
 @Entity
@@ -25,5 +29,9 @@ public class InventoryItem {
     private String status; // AVAILABLE, RENTED, IN_REPAIR, DECOMMISSIONED
 
     @Column(nullable = false)
-    private BigDecimal pricePerHour;
+    private Double pricePerHour;
+
+    // Шлях до картинки
+    @Column
+    private String imageUrl;
 }
