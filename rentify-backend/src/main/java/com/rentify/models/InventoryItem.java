@@ -31,6 +31,12 @@ public class InventoryItem {
     @Column(nullable = false)
     private Double pricePerHour;
 
+    @Column(nullable = false)
+    private Double pricePerDay;
+
+    @Column
+    private Long activeOrderId;
+
     // Шлях до картинки
     @Column
     private String imageUrl;

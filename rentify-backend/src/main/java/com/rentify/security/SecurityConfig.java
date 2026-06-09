@@ -14,9 +14,17 @@ public class SecurityConfig {
         http
             .cors(Customizer.withDefaults()) 
             .csrf(csrf -> csrf.disable())
+                        .cors(Customizer.withDefaults()) 
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/users/register", "/api/inventory/available").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/inventory/**").permitAll()
+                .requestMatchers("/api/notifications/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/orders/**").permitAll()
+                
+                .anyRequest().authenticated()
             );
         
         return http.build();

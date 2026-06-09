@@ -1,4 +1,4 @@
-package com.rentify.security; // Або com.rentify.config
+package com.rentify.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -12,14 +12,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Сервер буде відправляти повідомлення в канали, що починаються з /topic
+        // Дозволяємо брокеру розсилати повідомлення в канали, що починаються з /topic
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Точка підключення для React
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+        // Встановлюємо точку підключення для фронтенду і ДОЗВОЛЯЄМО доступ (CORS)
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*") // Дуже важливо, щоб браузер не блокував з'єднання!
+                .withSockJS();
     }
 }

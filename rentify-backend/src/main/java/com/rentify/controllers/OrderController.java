@@ -1,5 +1,6 @@
 package com.rentify.controllers;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rentify.dto.FinancialReport;
 import com.rentify.dto.RentalStats;
+import com.rentify.models.DamageReport;
 import com.rentify.models.InventoryItem;
 import com.rentify.models.RentalOrder;
+import com.rentify.repositories.DamageRepository;
 import com.rentify.repositories.InventoryRepository;
 import com.rentify.repositories.OrderRepository;
 
@@ -29,20 +33,66 @@ public class OrderController {
     @Autowired
     private InventoryRepository inventoryRepository;
 
+    @Autowired
+    private DamageRepository damageRepository;
+
+    @GetMapping("/financial-report")
+    public FinancialReport getFinancialReport() {
+        // Рахуємо дохід (припустимо, статус COMPLETED)
+        BigDecimal revenue = orderRepository.findAll().stream()
+                .filter(o -> "COMPLETED".equals(o.getStatus()))
+                .map(RentalOrder::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Рахуємо штрафи
+        BigDecimal penalties = damageRepository.findAll().stream()
+                .map(com.rentify.models.DamageReport::getPenaltyAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long activeOrders = orderRepository.findAll().stream()
+                .filter(o -> "ACTIVE".equals(o.getStatus()))
+                .count();
+
+        return new FinancialReport(revenue, penalties, activeOrders);
+    }
+
+    @PostMapping("/{orderId}/report-damage")
+    public DamageReport reportDamage(@PathVariable Long orderId, @RequestBody DamageReport report) {
+        RentalOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Замовлення не знайдено"));
+        
+        // Встановлюємо зв'язок
+        report.setRentalOrder(order);
+        
+        // Можна також змінити статус майна на "MAINTENANCE" (на ремонті), як ти описував у звіті
+        InventoryItem item = order.getInventoryItem();
+        item.setStatus("MAINTENANCE");
+        inventoryRepository.save(item);
+        
+        return damageRepository.save(report);
+    }
+
     @PostMapping("/create")
     public RentalOrder createOrder(@RequestBody RentalOrder order) {
-        // Отримуємо ID через вкладений об'єкт інвентарю
+        // 1. Знаходимо предмет
         InventoryItem item = inventoryRepository.findById(order.getInventoryItem().getId())
                 .orElseThrow(() -> new RuntimeException("Item not found"));
                 
-        // Змінюємо статус на "В оренді"
+        // 2. Ставимо статус "В оренді"
         item.setStatus("RENTED");
-        inventoryRepository.save(item);
         
-        // Прив'язуємо знайдений об'єкт майна до нашого замовлення перед збереженням
+        // 3. Прив'язуємо предмет до замовлення
         order.setInventoryItem(item);
         
-        return orderRepository.save(order);
+        // 4. СПОЧАТКУ зберігаємо замовлення, щоб база даних присвоїла йому ID
+        RentalOrder savedOrder = orderRepository.save(order);
+        
+        // 5. ТЕПЕР, коли ми маємо ID замовлення (savedOrder.getId()), оновлюємо предмет
+        item.setActiveOrderId(savedOrder.getId());
+        inventoryRepository.save(item); // Зберігаємо зміни в предметі
+        
+        // 6. Повертаємо збережене замовлення
+        return savedOrder;
     }
 
     @GetMapping("/client/{clientId}")

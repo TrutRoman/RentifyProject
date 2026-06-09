@@ -49,8 +49,8 @@ public class InventoryController {
         item.setStatus("AVAILABLE");
         InventoryItem savedItem = inventoryRepository.save(item);
 
-        // ДОДАЄМО ЦЕ: Відправляємо пуш-сповіщення всім, хто підписаний!
-        messagingTemplate.convertAndSend("/topic/notifications", 
+        // Відправляємо саме в канал для менеджерів
+        messagingTemplate.convertAndSend("/topic/manager", 
             "Увага! Технік щойно полагодив майно: " + savedItem.getName());
 
         return savedItem;
