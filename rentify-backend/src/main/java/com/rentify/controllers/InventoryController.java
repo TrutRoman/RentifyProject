@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,15 +30,26 @@ public class InventoryController {
         return inventoryRepository.findByStatus("AVAILABLE");
     }
 
-    @PostMapping("/add")
-    public InventoryItem addItem(@RequestBody InventoryItem item) {
-        return inventoryRepository.save(item);
-    }
-
     // 1. Отримати все майно, яке зараз на СТО
     @GetMapping("/maintenance")
     public List<InventoryItem> getMaintenanceItems() {
         return inventoryRepository.findByStatus("MAINTENANCE");
+    }
+
+    @PostMapping("/add")
+    public InventoryItem addItem(@RequestBody InventoryItem item) {
+        // Якщо предмет створюється, за замовчуванням він доступний
+        item.setStatus("AVAILABLE");
+        return inventoryRepository.save(item);
+    }
+
+    @DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<?> deleteItem(@PathVariable Long id) {
+        if (!inventoryRepository.existsById(id)) {
+            return org.springframework.http.ResponseEntity.badRequest().body("Предмет не знайдено!");
+        }
+        inventoryRepository.deleteById(id);
+        return org.springframework.http.ResponseEntity.ok("Предмет успішно видалено");
     }
 
     // 2. Відремонтувати майно (змінити статус назад на AVAILABLE)

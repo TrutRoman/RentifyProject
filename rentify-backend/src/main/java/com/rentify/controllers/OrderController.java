@@ -97,7 +97,10 @@ public class OrderController {
 
     @GetMapping("/client/{clientId}")
     public List<RentalOrder> getClientOrders(@PathVariable Long clientId) {
-        return orderRepository.findByClientId(clientId);
+        return orderRepository.findAll().stream()
+                // Фільтруємо замовлення так, щоб ID клієнта збігався із запитуваним
+                .filter(order -> order.getClientId() != null && order.getClientId().equals(clientId))
+                .toList();
     }
 
     // Метод для оформлення повернення
@@ -118,6 +121,34 @@ public class OrderController {
         }
 
         // Зберігаємо оновлене замовлення
+        return orderRepository.save(order);
+    }
+
+    @GetMapping("/item/{itemId}/booked-dates")
+    public List<String> getBookedDates(@PathVariable Long itemId) {
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getInventoryItem() != null && order.getInventoryItem().getId().equals(itemId))
+                .filter(order -> "ACTIVE".equals(order.getStatus())) // Беремо тільки ті, що зараз в оренді
+                .filter(order -> order.getStartTime() != null)
+                .map(order -> order.getStartTime().toString().substring(0, 10)) // Обрізаємо до формату YYYY-MM-DD
+                .distinct()
+                .toList();
+    }
+
+    // 1. Отримати всі замовлення для Менеджера
+    @GetMapping("/all")
+    public List<RentalOrder> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    // 2. Змінити статус замовлення (Схвалити, Відхилити, Завершити)
+    @PutMapping("/{id}/status")
+    public RentalOrder updateOrderStatus(@PathVariable Long id, @RequestBody String status) {
+        RentalOrder order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Замовлення не знайдено"));
+        
+        // Очищаємо статус від лапок, якщо фронтенд надіслав його як JSON-рядок
+        order.setStatus(status.replace("\"", "")); 
         return orderRepository.save(order);
     }
 
